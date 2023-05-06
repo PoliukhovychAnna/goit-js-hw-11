@@ -1,23 +1,127 @@
-const form = document.querySelector('#search-form');
+import axios from "axios";
+import Notiflix from 'notiflix';
+// import SimpleLightbox from 'simplelightbox';
+// import 'simplelightbox/dist/simple-lightbox.min.css';
+import { refs } from "./js/refs";
 
-const pix_API_KEY = '36097908-8b74f3252a1456be0d804a847';
-const pix_URL = 'https://pixabay.com/api/';
 
-form.addEventListener("submit", onSubmit)
+let page = 1;
+let inputValue = '';
+const limit = 40;
 
-async function onSubmit(e) {
+refs.loadMore.setAttribute('hidden', 'true');
+refs.form.addEventListener("submit", onSubmit)
+refs.loadMore.addEventListener(
+  'click', loadMorePictures)
+
+function onSubmit(e) {
   e.preventDefault();
-  const {
-    elements: { searchQuery },
-  } = e.currentTarget;
-
-  const options = {
-    q: searchQuery.value,
-    image_type: 'photo',
-    orientation: 'horizontal',
-    safesearch: true,
-  };
-
-  const request = await fetch(`${pix_URL}${pix_API_KEY},${options}`);
-  console.log(request);
+  inputValue = e.currentTarget.elements.searchQuery.value.trim().toLowerCase()
+  if (!inputValue) {
+    Notiflix.Notify.warning('Search query can not be empty!');
+    refs.galleryList.innerHTML = ''
+    refs.loadMore.setAttribute('hidden', 'true');
+    page = 1
+    return
+  }
+  getPictures(inputValue)
+    .then(resp => (refs.galleryList.innerHTML = createMarkup(resp.data.hits)))
+    
 }
+
+async function getPictures(value, page) {
+    const response = await axios.get(refs.pix_URL, {
+      params: {
+        key: refs.pix_API_KEY,
+            q: value,
+            image_type: 'photo',
+            orientation: 'horizontal',
+            safesearch: true,
+            page: page,
+            per_page: 40
+      },
+    })
+  if (response.data.total > 0) {
+    Notiflix.Notify.success(
+      `Hooray! We found ${response.data.totalHits} images.`
+    );
+
+  }
+    
+  refs.loadMore.removeAttribute('hidden');
+  page += 1
+
+  if (response.data.total === 0) {
+    Notiflix.Notify.failure(
+      'Sorry, there are no images matching your search query. Please try again.');
+    refs.galleryList.innerHTML = '';
+    page = 1
+    refs.loadMore.setAttribute('hidden', 'true');
+  }
+  console.log(response);
+  return response
+    }
+
+    function createMarkup(arr) {
+      return arr
+        .map(
+          ({
+            downloads,
+            comments,
+            views,
+            likes,
+            tags,
+            largeImageURL,
+            webformatURL,
+          }) => `<div class="photo-card">
+  <img src="${webformatURL}" alt="${tags}" width = "370" height = "250" loading="lazy" />
+  <div class="info">
+    <p class="info-item">
+      <b>Likes</b>
+      <b>${likes}</b>
+    </p>
+    <p class="info-item">
+      <b>Views</b>
+      <b>${views}</b>
+    </p>
+    <p class="info-item">
+      <b>Comments</b>
+      <b>${comments}</b>
+    </p>
+    <p class="info-item">
+      <b>Downloads</b>
+      <b>${downloads}</b>
+    </p>
+  </div>
+</div>`).join('');
+      
+}
+    
+
+async function loadMorePictures() {
+  const response = await axios.get(refs.pix_URL, {
+    params: {
+      key: refs.pix_API_KEY,
+      q: inputValue,
+      image_type: 'photo',
+      orientation: 'horizontal',
+      safesearch: true,
+      page: page,
+      per_page: limit,
+    },
+  })
+  refs.galleryList.innerHTML = createMarkup(response.data.hits)
+  
+  
+  page += 1
+
+  if (response.data.totalHits <= limit * page) {
+    refs.loadMore.setAttribute('hidden', 'true');
+    Notiflix.Notify.info(
+      "We're sorry, but you've reached the end of search results."
+    );
+    
+  }
+  console.dir(response);
+}
+
