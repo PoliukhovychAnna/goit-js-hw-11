@@ -58,7 +58,6 @@ async function getPictures(value, page) {
     page = 1
     refs.loadMore.setAttribute('hidden', 'true');
   }
-  console.log(response);
   return response
     }
 
@@ -95,6 +94,7 @@ async function getPictures(value, page) {
   </div>
 </div>`).join('');
       
+      
 }
     
 
@@ -110,7 +110,7 @@ async function loadMorePictures() {
       per_page: limit,
     },
   })
-  refs.galleryList.innerHTML = createMarkup(response.data.hits)
+  refs.galleryList.insertAdjacentHTML("beforeend", createMarkup(response.data.hits));
   
   
   page += 1
@@ -122,6 +122,30 @@ async function loadMorePictures() {
     );
     
   }
-  console.dir(response);
 }
 
+
+
+
+// let options = {
+//   root: null,
+//   rootMargin: '300px',
+//   threshold: 0.5,
+// };
+
+// let observer = new IntersectionObserver(onLoad, options);
+// function onLoad(entries, observer) {
+//   entries.forEach(entry => {
+//     if (entry.isIntersecting) {
+//       page += 1;
+//       getPictures(page)
+//         .then(data => {
+//           refs.galleryList.innerHTML = createMarkup(response.data.hits);
+//           if (data.page === data.total_pages) {
+//             observer.unobserve(refs.galleryList.lastElementChild);
+//           }
+//         })
+//         .catch(err => console.log(err));
+//     }
+//   });
+// }
