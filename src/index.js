@@ -45,7 +45,6 @@ async function getPictures(value, page) {
     Notiflix.Notify.success(
       `Hooray! We found ${response.data.totalHits} images.`
     );
-
   }
     
   refs.loadMore.removeAttribute('hidden');
@@ -56,6 +55,10 @@ async function getPictures(value, page) {
       'Sorry, there are no images matching your search query. Please try again.');
     refs.galleryList.innerHTML = '';
     page = 1
+    refs.loadMore.setAttribute('hidden', 'true');
+  }
+
+  if (response.data.total <= limit) {
     refs.loadMore.setAttribute('hidden', 'true');
   }
   return response
@@ -121,6 +124,10 @@ async function loadMorePictures() {
       "We're sorry, but you've reached the end of search results."
     );
     
+  }
+
+  if (response.data.total <= limit) {
+    refs.loadMore.setAttribute('hidden', 'true');
   }
 }
 
